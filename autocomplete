@@ -2,31 +2,44 @@
 
 use strict;
 use warnings;
-use CGI;
+use CGI::Safe qw/ taint /;
 use DBI;
 use DBD::mysql;
 use JSON;
 use List::Util 1.33 'any';
 
-my $cgi = CGI->new();
+
+my $cgi = CGI::Safe->new;
+
+# write CGI header
+print $cgi->header('application/json');
 
 # Set database variables
 my $platform = "mysql";
 my $database = $cgi->param('search_db_name');
+if ($database !~ /^[a-z0-9\-_]+$/){
+	print JSON::to_json({error => 'invalid database name'});
+	exit;
+}
 my $host = $cgi->param('search_db_host');
-my $port = $cgi->param('search_db_port');
+if ($host !~ /^[a-z0-9\-_\.]+$/){
+        print '{"error": "invalid host name"}';
+        exit;
+}
+my $port = 3306;
 my $user = $cgi->param('search_db_user');
-
-# write CGI header
-print $cgi->header('application/json');
+if ($user !~ /^[a-z0-9_-]+$/){
+        print '{"error": "invalid user"}';
+        exit;
+}
 
 # Connect to database
 my $dsn = "dbi:mysql:$database:$host:$port";
 my $dbh = DBI->connect($dsn, $user);
 
 # populate a list
-my @names = $cgi->param;
 my $list = $cgi->param('list');
+
 if($list){
 	if ($list eq 'tables'){
 		my $sth = $dbh->prepare(qq{SHOW TABLES});
@@ -45,6 +58,10 @@ if($list){
 # or autocomplete search terms
 my $term = $cgi->param('term');
 my $tablename = $cgi->param('table');
+if ($tablename !~ /^[a-z0-9_-]*$/){
+        print '{"error": "invalid table name"}';
+        exit;
+}
 
 # Prepare the queries
 my $table_32 = $tablename."_32";

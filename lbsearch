@@ -2,23 +2,35 @@
 
 use strict;
 use warnings;
-use CGI;
+use CGI::Safe qw/ taint /;
 use DBI;
 use DBD::mysql;
 use JSON;
 use List::Util 1.33 'any';
 
-my $cgi = CGI->new();
+my $cgi = CGI::Safe->new();
+
+# write CGI header
+print $cgi->header('application/json');
 
 # Set database variables
 my $platform = "mysql";
 my $database = $cgi->param('search_db_name');
+if ($database !~ /^[a-z0-9\-_]+$/){
+        print '{"error": "invalid database name"}';
+        exit;
+}
 my $host = $cgi->param('search_db_host');
-my $port = $cgi->param('search_db_port');
+if ($host !~ /^[a-z0-9\-_\.]+$/){
+        print '{"error": "invalid host name"}';
+        exit;
+}
+my $port = 3306;
 my $user = $cgi->param('search_db_user');
-
-# write CGI header
-print $cgi->header('application/json');
+if ($user !~ /^[a-z0-9_-]+$/){
+        print '{"error": "invalid user"}';
+        exit;
+}
 
 # Connect to database
 my $dsn = "dbi:mysql:$database:$host:$port";
@@ -27,12 +39,30 @@ my $dbh = DBI->connect($dsn, $user);
 # search terms
 my $term = $cgi->param('term');
 my $tablename = $cgi->param('table') || 'multi';
-warn $term;
-warn $tablename;
+if ($tablename !~ /^[a-z0-9_-]*$/){
+        print '{"error": "invalid table name"}';
+        exit;
+}
 my $page_size = $cgi->param('page_size') || 10;
+if ($page_size !~ /^[0-9]+$/){
+        print '{"error": "invalid page size"}';
+        exit;
+}
 my $feature_type = $cgi->param('feature_type') || undef;
+if ($feature_type !~ /^[a-z0-9_-]*$/){
+        print '{"error": "invalid feature type"}';
+        exit;
+}
 my $count = $cgi->param('count') || undef;
+if ($count !~ /^[0-9]*$/){
+        print '{"error": "invalid count"}';
+        exit;
+}
 my $offset = $cgi->param('offset') ? $cgi->param('offset') -1 : 0;
+if ($offset !~ /^[0-9]*$/){
+        print '{"error": "invalid offset"}';
+        exit;
+}
 my $page = $offset / $page_size + 1;
 $term =~ s/\*/\%/g;
 my @coords;
