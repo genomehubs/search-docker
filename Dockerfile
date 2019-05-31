@@ -39,14 +39,14 @@ RUN cpanm List::Util@1.33
 
 RUN apt-get -y install libdbd-mysql-perl
 
-COPY lbsearch /var/www/search.genomehubs.org/httpdocs/
-COPY autocomplete /var/www/search.genomehubs.org/httpdocs/
+COPY lbsearch /var/www/search.genomehubs.org/cgi-bin/
+COPY autocomplete /var/www/search.genomehubs.org/cgi-bin/
 
-RUN chmod +x /var/www/search.genomehubs.org/httpdocs/*
+RUN chmod +x /var/www/search.genomehubs.org/cgi-bin/*
 
 COPY ./search.genomehubs.org.conf /etc/apache2/sites-available/
 RUN a2enmod headers
-RUN a2ensite search.genomehubs.org
 RUN a2dissite 000-default.conf
 
-CMD /usr/sbin/apache2ctl -D FOREGROUND
+COPY startup.sh /
+CMD /startup.sh
