@@ -21,17 +21,19 @@ if ($database !~ /^[a-z0-9\-_]+$/){
 	print JSON::to_json({error => 'invalid database name'});
 	exit;
 }
-my $host = $cgi->param('search_db_host');
-if ($host !~ /^[a-z0-9\-_\.]+$/){
-        print '{"error": "invalid host name"}';
-        exit;
-}
+#my $host = $cgi->param('search_db_host');
+#if ($host !~ /^[a-z0-9\-_\.]+$/){
+#        print '{"error": "invalid host name"}';
+#        exit;
+#}
+my $host = 'genomehubs-mysql';
 my $port = 3306;
-my $user = $cgi->param('search_db_user');
-if ($user !~ /^[a-z0-9_-]+$/){
-        print '{"error": "invalid user"}';
-        exit;
-}
+#my $user = $cgi->param('search_db_user');
+#if ($user !~ /^[a-z0-9_-]+$/){
+#        print '{"error": "invalid user"}';
+#        exit;
+#}
+my $user = 'anonymous';
 
 # Connect to database
 my $dsn = "dbi:mysql:$database:$host:$port";
